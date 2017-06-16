@@ -36,8 +36,8 @@ ifdef CMD_EXE
   NULLDEV = nul:
   DIRLIST = $(strip $(foreach dir,$1,$(wildcard $(dir))))
   ifdef OS2
-    /@unixroot/usr/bin/mkdir -p $1
-    rm -r $1
+    MKDIR = /@unixroot/usr/bin/mkdir -p $1
+    RMDIR = rm -r $1
   else
     MKDIR = mkdir $(subst /,\,$1)
     RMDIR = $(if $(DIRLIST),rmdir /s /q $(subst /,\,$(DIRLIST)))
@@ -63,7 +63,11 @@ endif
 ifdef GIT_SHA
   $(info GIT_SHA: $(GIT_SHA))
 else
-  GIT_SHA := $(shell git rev-parse --short HEAD 2>$(NULLDEV))
+  ifdef OS2
+    GIT_SHA := $(dash -c "git rev-parse --short HEAD 2>$(NULLDEV)")
+  else
+    GIT_SHA := $(shell git rev-parse --short HEAD 2>$(NULLDEV))
+  endif
   ifneq ($(words $(GIT_SHA)),1)
     GIT_SHA := N/A
     $(info GIT_SHA: N/A)
