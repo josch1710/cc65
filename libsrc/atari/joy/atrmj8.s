@@ -35,24 +35,12 @@
 
         .addr   $0000
 
-; Button state masks (8 values)
-
-        .byte   $02                     ; JOY_UP
-        .byte   $04                     ; JOY_DOWN
-        .byte   $08                     ; JOY_LEFT
-        .byte   $10                     ; JOY_RIGHT
-        .byte   $01                     ; JOY_FIRE
-        .byte   $00                     ; JOY_FIRE2 not available
-        .byte   $00                     ; Future expansion
-        .byte   $00                     ; Future expansion
-
 ; Jump table.
 
         .addr   INSTALL
         .addr   UNINSTALL
         .addr   COUNT
         .addr   READJOY
-        .addr   0                       ; IRQ entry not used
 
 ; ------------------------------------------------------------------------
 ; Constants
@@ -115,10 +103,12 @@ READJOY:
 
 ; Read joystick
 
-        lda     PORTA           ; get position
-        and     #%00001111
+        lda     STRIG0          ; get button
         asl     a
-        ora     TRIG0           ; add button information
-        eor     #%00011111
+        asl     a
+        asl     a
+        asl     a
+        ora     PORTA           ; add position information
+        eor     #$1F
         ldx     #0              ; fix X
         rts

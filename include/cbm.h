@@ -46,10 +46,7 @@
 
 
 /* We need NULL. */
-
-#if !defined(_STDDEF_H)
-#  include <stddef.h>
-#endif
+#include <stddef.h>
 
 /* Load the system-specific files here, if needed. */
 #if   defined(__C64__)    && !defined(_C64_H)
@@ -72,6 +69,11 @@
 
 /* Include definitions for CBM file types */
 #include <cbm_filetype.h>
+
+
+
+#define JOY_FIRE_MASK   JOY_BTN_1_MASK
+#define JOY_FIRE(v)     ((v) & JOY_FIRE_MASK)
 
 
 
@@ -153,7 +155,17 @@ struct cbm_dirent {
 unsigned char get_tv (void);
 /* Return the video mode the machine is using. */
 
+#define KBREPEAT_CURSOR 0x00
+#define KBREPEAT_NONE   0x40
+#define KBREPEAT_ALL    0x80
 
+unsigned char __fastcall__ kbrepeat (unsigned char mode);
+/* Changes which keys have automatic repeat. */
+
+#if !defined(__CBM610__) && !defined(__PET__)
+void waitvsync (void);
+/* Wait for the start of the next frame */
+#endif
 
 /*****************************************************************************/
 /*                           CBM kernal functions                            */
@@ -194,6 +206,7 @@ void __fastcall__ cbm_k_setnam (const char* Name);
 void __fastcall__ cbm_k_talk (unsigned char dev);
 void cbm_k_udtim (void);
 void cbm_k_unlsn (void);
+void cbm_k_untlk (void);
 
 
 

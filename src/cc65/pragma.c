@@ -78,9 +78,10 @@ typedef enum {
     PRAGMA_DATASEG,                                     /* obsolete */
     PRAGMA_INLINE_STDFUNCS,
     PRAGMA_LOCAL_STRINGS,
+    PRAGMA_MESSAGE,
     PRAGMA_OPTIMIZE,
-    PRAGMA_REGVARADDR,
     PRAGMA_REGISTER_VARS,
+    PRAGMA_REGVARADDR,
     PRAGMA_REGVARS,                                     /* obsolete */
     PRAGMA_RODATA_NAME,
     PRAGMA_RODATASEG,                                   /* obsolete */
@@ -114,6 +115,7 @@ static const struct Pragma {
     { "dataseg",                PRAGMA_DATASEG            },      /* obsolete */
     { "inline-stdfuncs",        PRAGMA_INLINE_STDFUNCS    },
     { "local-strings",          PRAGMA_LOCAL_STRINGS      },
+    { "message",                PRAGMA_MESSAGE            },
     { "optimize",               PRAGMA_OPTIMIZE           },
     { "register-vars",          PRAGMA_REGISTER_VARS      },
     { "regvaraddr",             PRAGMA_REGVARADDR         },
@@ -386,11 +388,11 @@ static void StringPragma (StrBuf* B, void (*Func) (const char*))
 static void SegNamePragma (StrBuf* B, segment_t Seg)
 /* Handle a pragma that expects a segment name parameter */
 {
-    StrBuf      S = AUTO_STRBUF_INITIALIZER;
     const char* Name;
+    StrBuf S = AUTO_STRBUF_INITIALIZER;
+    int Push = 0;
 
     /* Check for the "push" or "pop" keywords */
-    int Push = 0;
     switch (ParsePushPop (B)) {
 
         case PP_NONE:
@@ -403,7 +405,13 @@ static void SegNamePragma (StrBuf* B, segment_t Seg)
         case PP_POP:
             /* Pop the old value and output it */
             PopSegName (Seg);
-            g_segname (Seg);
+
+            /* BSS variables are output at the end of the compilation.  Don't
+            ** bother to change their segment, now.
+            */
+            if (Seg != SEG_BSS) {
+                g_segname (Seg);
+            }
 
             /* Done */
             goto ExitPoint;
@@ -434,7 +442,13 @@ static void SegNamePragma (StrBuf* B, segment_t Seg)
         } else {
             SetSegName (Seg, Name);
         }
-        g_segname (Seg);
+
+        /* BSS variables are output at the end of the compilation.  Don't
+        ** bother to change their segment, now.
+        */
+        if (Seg != SEG_BSS) {
+            g_segname (Seg);
+        }
 
     } else {
 
@@ -511,7 +525,7 @@ static void WrappedCallPragma (StrBuf* B)
     /* Check if the name is valid */
     if (Entry && Entry->Flags & SC_FUNC) {
 
-        PushWrappedCall(Entry, Val);
+        PushWrappedCall(Entry, (unsigned char) Val);
         Entry->Flags |= SC_REF;
         Entry->V.F.Func->Flags |= FD_CALL_WRAPPER;
 
@@ -738,6 +752,13 @@ static void IntPragma (StrBuf* B, IntStack* Stack, long Low, long High)
 
 
 
+static void MakeMessage (const char* Message)
+{
+    fprintf (stderr, "%s(%u): Note: %s\n", GetInputName (CurTok.LI), GetInputLine (CurTok.LI), Message);
+}
+
+
+
 static void ParsePragma (void)
 /* Parse the contents of the _Pragma statement */
 {
@@ -835,6 +856,10 @@ static void ParsePragma (void)
 
         case PRAGMA_LOCAL_STRINGS:
             FlagPragma (&B, &LocalStrings);
+            break;
+
+        case PRAGMA_MESSAGE:
+            StringPragma (&B, MakeMessage);
             break;
 
         case PRAGMA_OPTIMIZE:

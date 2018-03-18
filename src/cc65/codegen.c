@@ -40,6 +40,7 @@
 /* common */
 #include "check.h"
 #include "cpu.h"
+#include "inttypes.h"
 #include "strbuf.h"
 #include "xmalloc.h"
 #include "xsprintf.h"
@@ -92,7 +93,7 @@ static void CheckLocalOffs (unsigned Offs)
 
 
 
-static const char* GetLabelName (unsigned Flags, unsigned long Label, long Offs)
+static const char* GetLabelName (unsigned Flags, uintptr_t Label, long Offs)
 {
     static char Buf [256];              /* Label name */
 
@@ -119,7 +120,7 @@ static const char* GetLabelName (unsigned Flags, unsigned long Label, long Offs)
 
         case CF_ABSOLUTE:
             /* Absolute address */
-            xsprintf (Buf, sizeof (Buf), "$%04X", (int)((Label+Offs) & 0xFFFF));
+            xsprintf (Buf, sizeof (Buf), "$%04X", (unsigned)((Label+Offs) & 0xFFFF));
             break;
 
         case CF_REGVAR:
@@ -729,7 +730,7 @@ void g_getimmed (unsigned Flags, unsigned long Val, long Offs)
 
 
 
-void g_getstatic (unsigned flags, unsigned long label, long offs)
+void g_getstatic (unsigned flags, uintptr_t label, long offs)
 /* Fetch an static memory cell into the primary register */
 {
     /* Create the correct label name */
@@ -1008,7 +1009,7 @@ void g_leavariadic (int Offs)
 
 
 
-void g_putstatic (unsigned flags, unsigned long label, long offs)
+void g_putstatic (unsigned flags, uintptr_t label, long offs)
 /* Store the primary register into the specified static memory cell */
 {
     /* Create the correct label name */
@@ -1584,7 +1585,7 @@ void g_addlocal (unsigned flags, int offs)
 
 
 
-void g_addstatic (unsigned flags, unsigned long label, long offs)
+void g_addstatic (unsigned flags, uintptr_t label, long offs)
 /* Add a static variable to ax */
 {
     unsigned L;
@@ -1634,7 +1635,7 @@ void g_addstatic (unsigned flags, unsigned long label, long offs)
 
 
 
-void g_addeqstatic (unsigned flags, unsigned long label, long offs,
+void g_addeqstatic (unsigned flags, uintptr_t label, long offs,
                     unsigned long val)
 /* Emit += for a static variable */
 {
@@ -1857,7 +1858,7 @@ void g_addeqind (unsigned flags, unsigned offs, unsigned long val)
 
 
 
-void g_subeqstatic (unsigned flags, unsigned long label, long offs,
+void g_subeqstatic (unsigned flags, uintptr_t label, long offs,
                     unsigned long val)
 /* Emit -= for a static variable */
 {
@@ -2093,7 +2094,7 @@ void g_addaddr_local (unsigned flags attribute ((unused)), int offs)
 
 
 
-void g_addaddr_static (unsigned flags, unsigned long label, long offs)
+void g_addaddr_static (unsigned flags, uintptr_t label, long offs)
 /* Add the address of a static variable to ax */
 {
     /* Create the correct label name */
@@ -2211,7 +2212,7 @@ void g_cmp (unsigned flags, unsigned long val)
 
 
 
-static void oper (unsigned Flags, unsigned long Val, const char** Subs)
+static void oper (unsigned Flags, unsigned long Val, const char* const* Subs)
 /* Encode a binary operation. subs is a pointer to four strings:
 **      0       --> Operate on ints
 **      1       --> Operate on unsigneds
@@ -2499,7 +2500,7 @@ void g_stackcheck (void)
 void g_add (unsigned flags, unsigned long val)
 /* Primary = TOS + Primary */
 {
-    static const char* ops[12] = {
+    static const char* const ops[4] = {
         "tosaddax", "tosaddax", "tosaddeax", "tosaddeax"
     };
 
@@ -2515,8 +2516,8 @@ void g_add (unsigned flags, unsigned long val)
 void g_sub (unsigned flags, unsigned long val)
 /* Primary = TOS - Primary */
 {
-    static const char* ops[12] = {
-        "tossubax", "tossubax", "tossubeax", "tossubeax",
+    static const char* const ops[4] = {
+        "tossubax", "tossubax", "tossubeax", "tossubeax"
     };
 
     if (flags & CF_CONST) {
@@ -2531,8 +2532,8 @@ void g_sub (unsigned flags, unsigned long val)
 void g_rsub (unsigned flags, unsigned long val)
 /* Primary = Primary - TOS */
 {
-    static const char* ops[12] = {
-        "tosrsubax", "tosrsubax", "tosrsubeax", "tosrsubeax",
+    static const char* const ops[4] = {
+        "tosrsubax", "tosrsubax", "tosrsubeax", "tosrsubeax"
     };
     oper (flags, val, ops);
 }
@@ -2542,8 +2543,8 @@ void g_rsub (unsigned flags, unsigned long val)
 void g_mul (unsigned flags, unsigned long val)
 /* Primary = TOS * Primary */
 {
-    static const char* ops[12] = {
-        "tosmulax", "tosumulax", "tosmuleax", "tosumuleax",
+    static const char* const ops[4] = {
+        "tosmulax", "tosumulax", "tosmuleax", "tosumuleax"
     };
 
     int p2;
@@ -2649,8 +2650,8 @@ void g_mul (unsigned flags, unsigned long val)
 void g_div (unsigned flags, unsigned long val)
 /* Primary = TOS / Primary */
 {
-    static const char* ops[12] = {
-        "tosdivax", "tosudivax", "tosdiveax", "tosudiveax",
+    static const char* const ops[4] = {
+        "tosdivax", "tosudivax", "tosdiveax", "tosudiveax"
     };
 
     /* Do strength reduction if the value is constant and a power of two */
@@ -2674,8 +2675,8 @@ void g_div (unsigned flags, unsigned long val)
 void g_mod (unsigned flags, unsigned long val)
 /* Primary = TOS % Primary */
 {
-    static const char* ops[12] = {
-        "tosmodax", "tosumodax", "tosmodeax", "tosumodeax",
+    static const char* const ops[4] = {
+        "tosmodax", "tosumodax", "tosmodeax", "tosumodeax"
     };
     int p2;
 
@@ -2699,8 +2700,8 @@ void g_mod (unsigned flags, unsigned long val)
 void g_or (unsigned flags, unsigned long val)
 /* Primary = TOS | Primary */
 {
-    static const char* ops[12] = {
-        "tosorax", "tosorax", "tosoreax", "tosoreax",
+    static const char* const ops[4] = {
+        "tosorax", "tosorax", "tosoreax", "tosoreax"
     };
 
     /* If the right hand side is const, the lhs is not on stack but still
@@ -2769,8 +2770,8 @@ void g_or (unsigned flags, unsigned long val)
 void g_xor (unsigned flags, unsigned long val)
 /* Primary = TOS ^ Primary */
 {
-    static const char* ops[12] = {
-        "tosxorax", "tosxorax", "tosxoreax", "tosxoreax",
+    static const char* const ops[4] = {
+        "tosxorax", "tosxorax", "tosxoreax", "tosxoreax"
     };
 
 
@@ -2837,8 +2838,8 @@ void g_xor (unsigned flags, unsigned long val)
 void g_and (unsigned Flags, unsigned long Val)
 /* Primary = TOS & Primary */
 {
-    static const char* ops[12] = {
-        "tosandax", "tosandax", "tosandeax", "tosandeax",
+    static const char* const ops[4] = {
+        "tosandax", "tosandax", "tosandeax", "tosandeax"
     };
 
     /* If the right hand side is const, the lhs is not on stack but still
@@ -2929,8 +2930,8 @@ void g_and (unsigned Flags, unsigned long Val)
 void g_asr (unsigned flags, unsigned long val)
 /* Primary = TOS >> Primary */
 {
-    static const char* ops[12] = {
-        "tosasrax", "tosshrax", "tosasreax", "tosshreax",
+    static const char* const ops[4] = {
+        "tosasrax", "tosshrax", "tosasreax", "tosshreax"
     };
 
     /* If the right hand side is const, the lhs is not on stack but still
@@ -3060,8 +3061,8 @@ void g_asr (unsigned flags, unsigned long val)
 void g_asl (unsigned flags, unsigned long val)
 /* Primary = TOS << Primary */
 {
-    static const char* ops[12] = {
-        "tosaslax", "tosshlax", "tosasleax", "tosshleax",
+    static const char* const ops[4] = {
+        "tosaslax", "tosshlax", "tosasleax", "tosshleax"
     };
 
 
@@ -3438,8 +3439,8 @@ void g_dec (unsigned flags, unsigned long val)
 void g_eq (unsigned flags, unsigned long val)
 /* Test for equal */
 {
-    static const char* ops[12] = {
-        "toseqax", "toseqax", "toseqeax", "toseqeax",
+    static const char* const ops[4] = {
+        "toseqax", "toseqax", "toseqeax", "toseqeax"
     };
 
     unsigned L;
@@ -3492,8 +3493,8 @@ void g_eq (unsigned flags, unsigned long val)
 void g_ne (unsigned flags, unsigned long val)
 /* Test for not equal */
 {
-    static const char* ops[12] = {
-        "tosneax", "tosneax", "tosneeax", "tosneeax",
+    static const char* const ops[4] = {
+        "tosneax", "tosneax", "tosneeax", "tosneeax"
     };
 
     unsigned L;
@@ -3546,8 +3547,8 @@ void g_ne (unsigned flags, unsigned long val)
 void g_lt (unsigned flags, unsigned long val)
 /* Test for less than */
 {
-    static const char* ops[12] = {
-        "tosltax", "tosultax", "toslteax", "tosulteax",
+    static const char* const ops[4] = {
+        "tosltax", "tosultax", "toslteax", "tosulteax"
     };
 
     unsigned Label;
@@ -3708,8 +3709,8 @@ void g_lt (unsigned flags, unsigned long val)
 void g_le (unsigned flags, unsigned long val)
 /* Test for less than or equal to */
 {
-    static const char* ops[12] = {
-        "tosleax", "tosuleax", "tosleeax", "tosuleeax",
+    static const char* const ops[4] = {
+        "tosleax", "tosuleax", "tosleeax", "tosuleeax"
     };
 
 
@@ -3823,8 +3824,8 @@ void g_le (unsigned flags, unsigned long val)
 void g_gt (unsigned flags, unsigned long val)
 /* Test for greater than */
 {
-    static const char* ops[12] = {
-        "tosgtax", "tosugtax", "tosgteax", "tosugteax",
+    static const char* const ops[4] = {
+        "tosgtax", "tosugtax", "tosgteax", "tosugteax"
     };
 
 
@@ -3954,8 +3955,8 @@ void g_gt (unsigned flags, unsigned long val)
 void g_ge (unsigned flags, unsigned long val)
 /* Test for greater than or equal to */
 {
-    static const char* ops[12] = {
-        "tosgeax", "tosugeax", "tosgeeax", "tosugeeax",
+    static const char* const ops[4] = {
+        "tosgeax", "tosugeax", "tosgeeax", "tosugeeax"
     };
 
     unsigned Label;
@@ -4276,7 +4277,7 @@ void g_initstatic (unsigned InitLabel, unsigned VarLabel, unsigned Size)
         g_getimmed (CF_STATIC, InitLabel, 0);
         AddCodeLine ("jsr pushax");
         g_getimmed (CF_INT | CF_UNSIGNED | CF_CONST, Size, 0);
-        AddCodeLine ("jsr %s", GetLabelName (CF_EXTERNAL, (unsigned long) "memcpy", 0));
+        AddCodeLine ("jsr %s", GetLabelName (CF_EXTERNAL, (uintptr_t) "memcpy", 0));
     }
 }
 

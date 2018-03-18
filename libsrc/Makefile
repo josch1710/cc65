@@ -27,6 +27,7 @@ TARGETS = apple2       \
           gamate       \
           lynx         \
           nes          \
+          none         \
           osic1p       \
           pce          \
           sim6502      \
@@ -72,7 +73,7 @@ endif
 
 ifndef TARGET
 
-datadir = $(prefix)/share/cc65
+datadir = $(PREFIX)/share/cc65
 
 all lib: $(TARGETS)
 
@@ -92,7 +93,7 @@ INSTALL = install
 
 define INSTALL_recipe
 
-$(if $(prefix),,$(error variable `prefix' must be set))
+$(if $(PREFIX),,$(error variable `PREFIX' must be set))
 $(INSTALL) -d $(DESTDIR)$(datadir)/$(dir)
 $(INSTALL) -m0644 ../$(dir)/*.* $(DESTDIR)$(datadir)/$(dir)
 
@@ -196,6 +197,7 @@ DEPS = $(OBJS:.o=.d)
 EXTRA_SRCPAT = $(SRCDIR)/extra/%.s
 EXTRA_OBJPAT = ../lib/$(TARGET)-%.o
 EXTRA_OBJS := $(patsubst $(EXTRA_SRCPAT),$(EXTRA_OBJPAT),$(wildcard $(SRCDIR)/extra/*.s))
+DEPS += $(EXTRA_OBJS:../lib/%.o=../libwrk/$(TARGET)/%.d)
 
 ZPOBJ = ../libwrk/$(TARGET)/zeropage.o
 ifeq ($(TARGET),$(filter $(TARGET),$(EXTZP)))
@@ -279,9 +281,9 @@ endef # COMPILE_recipe
 ../libwrk/$(TARGET)/%.o: %.c | ../libwrk/$(TARGET)
 	$(COMPILE_recipe)
 
-$(EXTRA_OBJPAT): $(EXTRA_SRCPAT) | ../lib
+$(EXTRA_OBJPAT): $(EXTRA_SRCPAT) | ../libwrk/$(TARGET) ../lib
 	@echo $(TARGET) - $(<F)
-	@$(CA65) -t $(TARGET) $(CA65FLAGS) -o $@ $<
+	@$(CA65) -t $(TARGET) $(CA65FLAGS) --create-dep $(@:../lib/%.o=../libwrk/$(TARGET)/%.d) -o $@ $<
 
 ../lib/$(TARGET).lib: $(OBJS) | ../lib
 	$(AR65) a $@ $?
