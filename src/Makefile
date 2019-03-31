@@ -76,8 +76,8 @@ endif
 
 CFLAGS += -MMD -MP -O3 -I common \
           -Wall -Wextra -Wno-char-subscripts $(USER_CFLAGS) \
-          -DCA65_INC=$(CA65_INC) -DCC65_INC=$(CC65_INC) -DCL65_TGT=$(CL65_TGT) \
-          -DLD65_LIB=$(LD65_LIB) -DLD65_OBJ=$(LD65_OBJ) -DLD65_CFG=$(LD65_CFG) \
+          -DCA65_INC="$(CA65_INC)" -DCC65_INC="$(CC65_INC)" -DCL65_TGT="$(CL65_TGT)" \
+          -DLD65_LIB="$(LD65_LIB)" -DLD65_OBJ="$(LD65_OBJ)" -DLD65_CFG="$(LD65_CFG)" \
           -DGIT_SHA=$(GIT_SHA)
 
 ifdef OS2
@@ -122,7 +122,7 @@ $(RM) /usr/local/bin/$(prog)
 endef # UNAVAIL_recipe
 
 install:
-	$(if $(PREFIX),,$(error variable `PREFIX' must be set))
+	$(if $(PREFIX),,$(error variable "PREFIX" must be set))
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) ../bin/* $(DESTDIR)$(bindir)
 
